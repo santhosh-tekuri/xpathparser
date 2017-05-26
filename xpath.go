@@ -196,15 +196,15 @@ func (s *Step) String() string {
 type NodeTest interface{}
 
 type NameTest struct {
-	Prefix    string
-	LocalName string
+	Prefix string
+	Local  string
 }
 
 func (nt *NameTest) String() string {
 	if nt.Prefix == "" {
-		return nt.LocalName
+		return nt.Local
 	}
-	return fmt.Sprintf("%s:%s", nt.Prefix, nt.LocalName)
+	return fmt.Sprintf("%s:%s", nt.Prefix, nt.Local)
 }
 
 type PITest string
