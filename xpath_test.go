@@ -52,7 +52,7 @@ func TestInvalidXPaths(t *testing.T) {
 		`//+1`,
 	}
 	for _, test := range tests {
-		if _, err := Compile(test); err == nil {
+		if _, err := Parse(test); err == nil {
 			t.Errorf("FAIL: error expected for %s", test)
 		} else {
 			t.Log(err)
@@ -191,7 +191,7 @@ func TestCompiledXPaths(t *testing.T) {
 	}
 	for k, v := range tests {
 		t.Logf("compiling %s", k)
-		expr, err := Compile(k)
+		expr, err := Parse(k)
 		if err != nil {
 			t.Errorf("FAIL: %v", err)
 			continue

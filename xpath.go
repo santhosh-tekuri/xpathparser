@@ -260,12 +260,12 @@ func (b Boolean) String() string {
 	return fmt.Sprintf("%t()", bool(b))
 }
 
-func MustCompile(xpath string) Expr {
+func MustParse(xpath string) Expr {
 	p := &parser{lexer: lexer{xpath: xpath}}
 	return simplify(p.parse())
 }
 
-func Compile(xpath string) (expr Expr, err error) {
+func Parse(xpath string) (expr Expr, err error) {
 	defer func() {
 		if r := recover(); r != nil {
 			if _, ok := r.(runtime.Error); ok {
