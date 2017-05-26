@@ -209,7 +209,7 @@ func equals(v1, v2 interface{}) bool {
 	switch v1 := v1.(type) {
 	case nil:
 		return v2 == nil
-	case Number, String, Boolean, NodeType, PITest:
+	case Number, String, NodeType, PITest:
 		return v1 == v2
 	case *VarRef:
 		v2, ok := v2.(*VarRef)

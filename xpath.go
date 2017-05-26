@@ -254,12 +254,6 @@ func (l String) String() string {
 	return strconv.Quote(string(l))
 }
 
-type Boolean bool
-
-func (b Boolean) String() string {
-	return fmt.Sprintf("%t()", bool(b))
-}
-
 func MustParse(xpath string) Expr {
 	p := &parser{lexer: lexer{xpath: xpath}}
 	return simplify(p.parse())
@@ -332,12 +326,4 @@ func simplify(e Expr) Expr {
 		return e
 	}
 	return e
-}
-
-func IsLiteral(e Expr) bool {
-	switch e.(type) {
-	case String, Number, Boolean:
-		return true
-	}
-	return false
 }
