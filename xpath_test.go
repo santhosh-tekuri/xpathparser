@@ -188,6 +188,14 @@ func TestCompiledXPaths(t *testing.T) {
 		`a:`: &LocationPath{false, []*Step{
 			{Child, &NameTest{"a", ""}, nil},
 		}},
+		`document('test.xml')/*`: &PathExpr{
+			&FuncCall{"", "document", []Expr{
+				String("test.xml"),
+			}},
+			&LocationPath{false, []*Step{
+				{Child, &NameTest{"", "*"}, nil},
+			}},
+		},
 	}
 	for k, v := range tests {
 		t.Logf("compiling %s", k)

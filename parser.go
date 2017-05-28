@@ -210,6 +210,7 @@ func (p *parser) pathExpr() {
 	case identifier:
 		if (p.token(1).kind == lparen && !isNodeTypeName(p.token(0))) || (p.token(1).kind == colon && p.token(3).kind == lparen) {
 			p.filterExpr()
+			t = p.token(0)
 			if t.kind == slash || t.kind == slashSlash {
 				p.locationPath(false)
 			}
