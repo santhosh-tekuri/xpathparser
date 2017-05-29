@@ -113,7 +113,7 @@ func (op Op) String() string {
 }
 
 // An Expr is an interface holding one of the types:
-// *LocationPath, *Binary, *Negate, *FilterExpr, *PathExpr, *VarRef, *FuncCall, Number, String or Boolean.
+// *LocationPath, *FilterExpr, *PathExpr, *Binary, *Negate, *VarRef, *FuncCall, Number or String
 type Expr interface{}
 
 type BinaryExpr struct {
@@ -227,7 +227,7 @@ func (vr *VarRef) String() string {
 
 type FuncCall struct {
 	Prefix string
-	Name   string
+	Local  string
 	Params []Expr
 }
 
@@ -237,9 +237,9 @@ func (fc *FuncCall) String() string {
 		p[i] = fmt.Sprint(param)
 	}
 	if fc.Prefix == "" {
-		return fmt.Sprintf("%s(%s)", fc.Name, strings.Join(p, ", "))
+		return fmt.Sprintf("%s(%s)", fc.Local, strings.Join(p, ", "))
 	}
-	return fmt.Sprintf("%s:%s(%s)", fc.Prefix, fc.Name, strings.Join(p, ", "))
+	return fmt.Sprintf("%s:%s(%s)", fc.Prefix, fc.Local, strings.Join(p, ", "))
 }
 
 type Number float64

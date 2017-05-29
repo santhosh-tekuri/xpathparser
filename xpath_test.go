@@ -258,7 +258,7 @@ func equals(v1, v2 interface{}) bool {
 		return true
 	case *FuncCall:
 		v2, ok := v2.(*FuncCall)
-		return ok && v1.Prefix == v2.Prefix && v1.Name == v2.Name && equals(v1.Params, v2.Params)
+		return ok && v1.Prefix == v2.Prefix && v1.Local == v2.Local && equals(v1.Params, v2.Params)
 	case *FilterExpr:
 		v2, ok := v2.(*FilterExpr)
 		return ok && equals(v1.Expr, v2.Expr) && equals(v1.Predicates, v2.Predicates)
