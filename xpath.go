@@ -215,14 +215,14 @@ func (pt PITest) String() string {
 
 type VarRef struct {
 	Prefix string
-	Name   string
+	Local  string
 }
 
 func (vr *VarRef) String() string {
 	if vr.Prefix == "" {
-		return fmt.Sprintf("$%s", vr.Name)
+		return fmt.Sprintf("$%s", vr.Local)
 	}
-	return fmt.Sprintf("$%s:%s", vr.Prefix, vr.Name)
+	return fmt.Sprintf("$%s:%s", vr.Prefix, vr.Local)
 }
 
 type FuncCall struct {
