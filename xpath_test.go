@@ -196,6 +196,21 @@ func TestCompiledXPaths(t *testing.T) {
 				{Child, &NameTest{"", "*"}, nil},
 			}},
 		},
+		`//book[author = editor]/price`: &LocationPath{true, []*Step{
+			{DescendantOrSelf, Node, nil},
+			{Child, &NameTest{"", "book"}, []Expr{
+				&BinaryExpr{
+					&LocationPath{false, []*Step{
+						{Child, &NameTest{"", "author"}, nil},
+					}},
+					EQ,
+					&LocationPath{false, []*Step{
+						{Child, &NameTest{"", "editor"}, nil},
+					}},
+				},
+			}},
+			{Child, &NameTest{"", "price"}, nil},
+		}},
 	}
 	for k, v := range tests {
 		t.Logf("compiling %s", k)
