@@ -296,9 +296,9 @@ func (p *parser) functionCall() {
 	p.match(rparen)
 	frame := p.popFrame()
 	fcall := frame[0].(*FuncCall)
-	fcall.Params = make([]Expr, len(frame)-1)
-	for i := range fcall.Params {
-		fcall.Params[i] = frame[i+1]
+	fcall.Args = make([]Expr, len(frame)-1)
+	for i := range fcall.Args {
+		fcall.Args[i] = frame[i+1]
 	}
 	p.push(fcall)
 }

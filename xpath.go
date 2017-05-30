@@ -228,12 +228,12 @@ func (vr *VarRef) String() string {
 type FuncCall struct {
 	Prefix string
 	Local  string
-	Params []Expr
+	Args   []Expr
 }
 
 func (fc *FuncCall) String() string {
-	p := make([]string, len(fc.Params))
-	for i, param := range fc.Params {
+	p := make([]string, len(fc.Args))
+	for i, param := range fc.Args {
 		p[i] = fmt.Sprint(param)
 	}
 	if fc.Prefix == "" {
@@ -320,8 +320,8 @@ func simplify(e Expr) Expr {
 		}
 		return e
 	case *FuncCall:
-		for i, p := range e.Params {
-			e.Params[i] = simplify(p)
+		for i, p := range e.Args {
+			e.Args[i] = simplify(p)
 		}
 		return e
 	}
