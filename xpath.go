@@ -11,6 +11,9 @@ import (
 	"strings"
 )
 
+// Error is the error type returned by Parse function.
+//
+// It represents a syntax error in the XPath expression.
 type Error struct {
 	Msg    string
 	XPath  string
@@ -21,6 +24,7 @@ func (e *Error) Error() string {
 	return fmt.Sprintf("%s in xpath %s at offset %d", e.Msg, e.XPath, e.Offset)
 }
 
+// Axis specifies the tree relationship between the nodes selected by the location step and the context node.
 type Axis int
 
 const (
@@ -67,6 +71,7 @@ func init() {
 	}
 }
 
+// NodeType represents test on node type
 type NodeType int
 
 const (
@@ -207,6 +212,7 @@ func (nt *NameTest) String() string {
 	return fmt.Sprintf("%s:%s", nt.Prefix, nt.Local)
 }
 
+// PITest represents processing-instruction test.
 type PITest string
 
 func (pt PITest) String() string {
@@ -242,23 +248,28 @@ func (fc *FuncCall) String() string {
 	return fmt.Sprintf("%s:%s(%s)", fc.Prefix, fc.Local, strings.Join(p, ", "))
 }
 
+// Number represents number literal.
 type Number float64
 
 func (n Number) String() string {
 	return strconv.FormatFloat(float64(n), 'f', -1, 64)
 }
 
+// String represents string literal.
 type String string
 
 func (l String) String() string {
 	return strconv.Quote(string(l))
 }
 
+// MustParse is like Parse but panics if the xpath expression has error.
+// It simplifies safe initialization of global variables holding parsed expressions.
 func MustParse(xpath string) Expr {
 	p := &parser{lexer: lexer{xpath: xpath}}
 	return simplify(p.parse())
 }
 
+// Parse parses given xpath 1.0 expression.
 func Parse(xpath string) (expr Expr, err error) {
 	defer func() {
 		if r := recover(); r != nil {
