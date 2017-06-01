@@ -9,11 +9,9 @@ This Package parses given XPath expression to expression model.
 
 To Evaluate XPath, use https://github.com/santhosh-tekuri/xpatheng
 
-	expr, err := xpath.Parse("(/a/b)[5]")
-	if err != nil {
-  		fmt.Println(err)
-  		return
-	}
+An example of using this package:
+
+	expr := xpath.MustParse("(/a/b)[5]")
 	fmt.Println(expr)
 
 */
