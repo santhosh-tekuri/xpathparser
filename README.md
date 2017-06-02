@@ -1,21 +1,20 @@
-# xpath
+# xpathparser
 
-[![GoDoc](https://godoc.org/github.com/santhosh-tekuri/xpath?status.svg)](https://godoc.org/github.com/santhosh-tekuri/xpath)
-[![Go Report Card](https://goreportcard.com/badge/github.com/santhosh-tekuri/xpath)](https://goreportcard.com/report/github.com/santhosh-tekuri/xpath)
-[![Build Status](https://travis-ci.org/santhosh-tekuri/xpath.svg?branch=master)](https://travis-ci.org/santhosh-tekuri/xpath)
-[![codecov.io](https://codecov.io/github/santhosh-tekuri/xpath/coverage.svg?branch=master)](https://codecov.io/github/santhosh-tekuri/xpath?branch=master)
+[![GoDoc](https://godoc.org/github.com/santhosh-tekuri/xpathparser?status.svg)](https://godoc.org/github.com/santhosh-tekuri/xpathparser)
+[![Go Report Card](https://goreportcard.com/badge/github.com/santhosh-tekuri/xpathparser)](https://goreportcard.com/report/github.com/santhosh-tekuri/xpathparser)
+[![Build Status](https://travis-ci.org/santhosh-tekuri/xpathparser.svg?branch=master)](https://travis-ci.org/santhosh-tekuri/xpathparser)
+[![codecov.io](https://codecov.io/github/santhosh-tekuri/xpathparser/coverage.svg?branch=master)](https://codecov.io/github/santhosh-tekuri/xpathparser?branch=master)
 
-Package xpath provides lexer and parser for XPath 1.0.
+Package xpathparser provides lexer and parser for XPath 1.0.
 
 This Package parses given XPath expression to expression model. 
 
-To Evaluate XPath, use https://github.com/santhosh-tekuri/xpatheng
 
 ## Example
 
 An example of using this package:
 
 ```go
-expr := xpath.MustParse("(/a/b)[5]")
+expr := xpathparser.MustParse("(/a/b)[5]")
 fmt.Println(expr)
 ```

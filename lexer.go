@@ -2,7 +2,7 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
-package xpath
+package xpathparser
 
 // see lexer specification at https://www.w3.org/TR/xpath/#exprlex
 
