@@ -9,7 +9,6 @@ Package xpathparser provides lexer and parser for XPath 1.0.
 
 This Package parses given XPath expression to expression model. 
 
-
 ## Example
 
 An example of using this package:
