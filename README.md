@@ -17,3 +17,5 @@ An example of using this package:
 expr := xpathparser.MustParse("(/a/b)[5]")
 fmt.Println(expr)
 ```
+
+This package does not evaluate xpath. For evaluating xpaths use https://github.com/santhosh-tekuri/xpath
