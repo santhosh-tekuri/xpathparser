@@ -221,6 +221,12 @@ func TestCompiledXPaths(t *testing.T) {
 				{Child, &NameTest{"", "b"}, nil},
 			}},
 		},
+		`(.)/`: &PathExpr{
+			&LocationPath{false, []*Step{
+				{Self, Node, nil},
+			}},
+			&LocationPath{false, nil},
+		},
 	}
 	for k, v := range tests {
 		t.Logf("compiling %s", k)
