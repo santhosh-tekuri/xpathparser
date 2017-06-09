@@ -199,7 +199,7 @@ func (p *parser) pathExpr() {
 		p.filterExpr()
 		t = p.token(0)
 		if t.kind == slash || t.kind == slashSlash {
-			panic("nodeset expected")
+			panic(&Error{"nodeset expected", p.lexer.xpath, p.token(0).begin})
 		}
 	case lparen, dollar:
 		p.filterExpr()

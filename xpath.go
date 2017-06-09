@@ -276,11 +276,14 @@ func Parse(xpath string) (expr Expr, err error) {
 			if _, ok := r.(runtime.Error); ok {
 				panic(r)
 			}
-			err = r.(error)
+			if _, ok := r.(error); ok {
+				err = r.(error)
+			} else {
+				err = fmt.Errorf("%v", r)
+			}
 		}
 	}()
-	p := &parser{lexer: lexer{xpath: xpath}}
-	return simplify(p.parse()), nil
+	return MustParse(xpath), nil
 }
 
 func predicatesString(predicates []Expr) string {

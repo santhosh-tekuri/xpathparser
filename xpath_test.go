@@ -51,6 +51,7 @@ func TestInvalidXPaths(t *testing.T) {
 		`//`,
 		`//+1`,
 		`(.)/123`,
+		`123/`,
 	}
 	for _, test := range tests {
 		if _, err := Parse(test); err == nil {
