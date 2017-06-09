@@ -1,5 +1,6 @@
 # xpathparser
 
+[![License](https://img.shields.io/badge/License-BSD%203--Clause-blue.svg)](https://opensource.org/licenses/BSD-3-Clause)
 [![GoDoc](https://godoc.org/github.com/santhosh-tekuri/xpathparser?status.svg)](https://godoc.org/github.com/santhosh-tekuri/xpathparser)
 [![Go Report Card](https://goreportcard.com/badge/github.com/santhosh-tekuri/xpathparser)](https://goreportcard.com/report/github.com/santhosh-tekuri/xpathparser)
 [![Build Status](https://travis-ci.org/santhosh-tekuri/xpathparser.svg?branch=master)](https://travis-ci.org/santhosh-tekuri/xpathparser)
