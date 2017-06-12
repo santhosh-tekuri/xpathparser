@@ -27,6 +27,7 @@ func (e *Error) Error() string {
 // Axis specifies the tree relationship between the nodes selected by the location step and the context node.
 type Axis int
 
+// Possible values for Axis.
 const (
 	Child Axis = iota
 	Descendant
@@ -71,9 +72,10 @@ func init() {
 	}
 }
 
-// NodeType represents test on node type
+// NodeType represents test on node type.
 type NodeType int
 
+// Possible values for NodeType.
 const (
 	Comment NodeType = iota
 	Text
@@ -92,8 +94,10 @@ func (nt NodeType) String() string {
 	panic(fmt.Sprintf("unknown NodeType %d", int(nt)))
 }
 
+// Op represents XPath binrary operator.
 type Op int
 
+// Possible values for Op.
 const (
 	EQ Op = iota
 	NEQ
@@ -121,6 +125,7 @@ func (op Op) String() string {
 // *LocationPath, *FilterExpr, *PathExpr, *Binary, *Negate, *VarRef, *FuncCall, Number or String
 type Expr interface{}
 
+// BinaryExpr represents a binary operation.
 type BinaryExpr struct {
 	LHS Expr
 	Op  Op
@@ -131,6 +136,7 @@ func (b *BinaryExpr) String() string {
 	return fmt.Sprintf("(%s %s %s)", b.LHS, b.Op, b.RHS)
 }
 
+// NegateExpr represents unary operator `-`.
 type NegateExpr struct {
 	Expr Expr
 }
@@ -139,6 +145,7 @@ func (n *NegateExpr) String() string {
 	return fmt.Sprintf("-%s", n.Expr)
 }
 
+// LocationPath represents XPath location path.
 type LocationPath struct {
 	Abs   bool
 	Steps []*Step
@@ -155,6 +162,7 @@ func (l *LocationPath) String() string {
 	return fmt.Sprintf("%s", strings.Join(s, "/"))
 }
 
+// FilterExpr represents https://www.w3.org/TR/xpath/#NT-FilterExpr.
 type FilterExpr struct {
 	Expr       Expr
 	Predicates []Expr
@@ -164,8 +172,9 @@ func (f *FilterExpr) String() string {
 	return fmt.Sprintf("%s%s", f.Expr, predicatesString(f.Predicates))
 }
 
+// PathExpr represents https://www.w3.org/TR/xpath/#NT-PathExpr.
 type PathExpr struct {
-	Filter       Expr // can be nil
+	Filter       Expr // not nil after simplify
 	LocationPath *LocationPath
 }
 
@@ -186,6 +195,7 @@ func (p *PathExpr) String() string {
 	return s
 }
 
+// Step represents XPath location step.
 type Step struct {
 	Axis       Axis
 	NodeTest   NodeTest
@@ -200,6 +210,7 @@ func (s *Step) String() string {
 // NodeType, *NameTest, or PITest.
 type NodeTest interface{}
 
+// NameTest represents https://www.w3.org/TR/xpath/#NT-NameTest.
 type NameTest struct {
 	Prefix string
 	Local  string
@@ -219,6 +230,7 @@ func (pt PITest) String() string {
 	return fmt.Sprintf("processing-instruction(%q)", string(pt))
 }
 
+// VarRef represents https://www.w3.org/TR/xpath/#NT-VariableReference.
 type VarRef struct {
 	Prefix string
 	Local  string
@@ -231,6 +243,7 @@ func (vr *VarRef) String() string {
 	return fmt.Sprintf("$%s:%s", vr.Prefix, vr.Local)
 }
 
+// FuncCall represents https://www.w3.org/TR/xpath/#section-Function-Calls.
 type FuncCall struct {
 	Prefix string
 	Local  string

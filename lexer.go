@@ -128,13 +128,13 @@ func (l *lexer) token(kind kind, n int) (token, error) {
 }
 
 func (l *lexer) next() (token, error) {
-Loop:
+SkipWS:
 	for l.hasMore() {
 		switch l.char(0) {
 		case ' ', '\t', '\n', '\r':
 			l.consume(1)
 		default:
-			break Loop
+			break SkipWS
 		}
 	}
 

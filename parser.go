@@ -353,7 +353,7 @@ func (p *parser) locationPath(abs bool) {
 
 func (p *parser) absoluteLocationPath() {
 	p.pushFrame()
-	p.push(&LocationPath{true, nil})
+	p.push(&LocationPath{Abs: true})
 	switch p.token(0).kind {
 	case slash:
 		p.match(slash)
@@ -376,7 +376,7 @@ func (p *parser) absoluteLocationPath() {
 
 func (p *parser) relativeLocationPath() {
 	p.pushFrame()
-	p.push(&LocationPath{false, nil})
+	p.push(&LocationPath{Abs: false})
 	switch p.token(0).kind {
 	case slash:
 		p.match(slash)
