@@ -82,16 +82,10 @@ const (
 	Node
 )
 
+var nodeTypeNames = []string{"comment()", "text()", "node()"}
+
 func (nt NodeType) String() string {
-	switch nt {
-	case Comment:
-		return "comment()"
-	case Text:
-		return "text()"
-	case Node:
-		return "node()"
-	}
-	panic(fmt.Sprintf("unknown NodeType %d", int(nt)))
+	return nodeTypeNames[nt]
 }
 
 // Op represents XPath binrary operator.
