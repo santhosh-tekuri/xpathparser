@@ -145,42 +145,41 @@ func (p *parser) unionExpr() Expr {
 }
 
 func (p *parser) pathExpr() Expr {
-	var filter Expr
-	var locationPath *LocationPath
 	switch p.token(0).kind {
 	case number, literal:
-		filter = p.filterExpr()
+		filter := p.filterExpr()
 		switch p.token(0).kind {
 		case slash, slashSlash:
 			panic(p.error("nodeset expected"))
 		}
+		return filter
 	case lparen, dollar:
-		filter = p.filterExpr()
+		filter := p.filterExpr()
 		switch p.token(0).kind {
 		case slash, slashSlash:
-			locationPath = p.locationPath(false)
+			return &PathExpr{filter, p.locationPath(false)}
 		}
+		return filter
 	case identifier:
 		if (p.token(1).kind == lparen && !isNodeTypeName(p.token(0))) || (p.token(1).kind == colon && p.token(3).kind == lparen) {
-			filter = p.filterExpr()
+			filter := p.filterExpr()
 			switch p.token(0).kind {
 			case slash, slashSlash:
-				locationPath = p.locationPath(false)
+				return &PathExpr{filter, p.locationPath(false)}
 			}
-		} else {
-			locationPath = p.locationPath(false)
+			return filter
 		}
+		return p.locationPath(false)
 	case dot, dotDot, star, at:
-		locationPath = p.locationPath(false)
+		return p.locationPath(false)
 	case slash, slashSlash:
-		locationPath = p.locationPath(true)
+		return p.locationPath(true)
 	default:
 		panic(p.unexpectedToken())
 	}
-	return &PathExpr{filter, locationPath}
 }
 
-func (p *parser) filterExpr() *FilterExpr {
+func (p *parser) filterExpr() Expr {
 	var expr Expr
 	switch t := p.token(0); t.kind {
 	case number:
@@ -202,7 +201,11 @@ func (p *parser) filterExpr() *FilterExpr {
 	case dollar:
 		expr = p.variableReference()
 	}
-	return &FilterExpr{expr, p.predicates()}
+	predicates := p.predicates()
+	if len(predicates) == 0 {
+		return expr
+	}
+	return &FilterExpr{expr, predicates}
 }
 
 func (p *parser) functionCall() *FuncCall {

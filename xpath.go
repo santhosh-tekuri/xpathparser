@@ -278,7 +278,7 @@ func (l String) String() string {
 // It simplifies safe initialization of global variables holding parsed expressions.
 func MustParse(xpath string) Expr {
 	p := &parser{lexer: lexer{xpath: xpath}}
-	return simplify(p.parse())
+	return p.parse()
 }
 
 // Parse parses given xpath 1.0 expression.
@@ -304,52 +304,4 @@ func predicatesString(predicates []Expr) string {
 		p[i] = fmt.Sprintf("[%s]", predicate)
 	}
 	return strings.Join(p, "")
-}
-
-func simplify(e Expr) Expr {
-	switch e := e.(type) {
-	case *BinaryExpr:
-		e.LHS = simplify(e.LHS)
-		e.RHS = simplify(e.RHS)
-		return e
-	case *NegateExpr:
-		e.Expr = simplify(e.Expr)
-		return e
-	case *PathExpr:
-		if e.Filter != nil {
-			e.Filter = simplify(e.Filter)
-		}
-		if e.LocationPath != nil {
-			e.LocationPath = simplify(e.LocationPath).(*LocationPath)
-		}
-		if e.Filter == nil {
-			return e.LocationPath
-		}
-		if e.LocationPath == nil {
-			return e.Filter
-		}
-		return e
-	case *FilterExpr:
-		e.Expr = simplify(e.Expr)
-		if len(e.Predicates) == 0 {
-			return e.Expr
-		}
-		for i, predicate := range e.Predicates {
-			e.Predicates[i] = simplify(predicate)
-		}
-		return e
-	case *LocationPath:
-		for _, step := range e.Steps {
-			for i, predicate := range step.Predicates {
-				step.Predicates[i] = simplify(predicate)
-			}
-		}
-		return e
-	case *FuncCall:
-		for i, p := range e.Args {
-			e.Args[i] = simplify(p)
-		}
-		return e
-	}
-	return e
 }
