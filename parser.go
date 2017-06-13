@@ -292,13 +292,9 @@ func (p *parser) arguments() {
 func (p *parser) predicates() []Expr {
 	p.pushFrame()
 	for p.token(0).kind == lbracket {
-		p.pushFrame()
 		p.match(lbracket)
 		p.orExpr()
 		p.match(rbracket)
-		predicate := p.pop()
-		p.popFrame()
-		p.push(predicate)
 	}
 	return p.popFrame()
 }
