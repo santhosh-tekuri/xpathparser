@@ -279,17 +279,10 @@ func (p *parser) functionCall() {
 	}
 	name := p.match(identifier).text()
 	p.pushFrame()
-	p.push(&FuncCall{prefix, name, nil})
 	p.match(lparen)
 	p.arguments()
 	p.match(rparen)
-	frame := p.popFrame()
-	fcall := frame[0].(*FuncCall)
-	fcall.Args = make([]Expr, len(frame)-1)
-	for i := range fcall.Args {
-		fcall.Args[i] = frame[i+1]
-	}
-	p.push(fcall)
+	p.push(&FuncCall{prefix, name, p.popFrame()})
 }
 
 func (p *parser) arguments() {
