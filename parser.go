@@ -13,7 +13,6 @@ import (
 type parser struct {
 	lexer  lexer
 	tokens []token
-	stack  [][]Expr
 }
 
 func (p *parser) error(format string, args ...interface{}) error {
@@ -30,35 +29,6 @@ func (p *parser) expectedTokens(expected ...kind) error {
 		tokens[i] = k.String()
 	}
 	return p.error("expected %s, but got %v", strings.Join(tokens, " or "), p.token(0).kind)
-}
-
-func (p *parser) pushFrame() {
-	p.stack = append(p.stack, nil)
-}
-
-func (p *parser) peekFrame() []Expr {
-	return p.stack[len(p.stack)-1]
-}
-
-func (p *parser) popFrame() []Expr {
-	frame := p.peekFrame()
-	p.stack = p.stack[:len(p.stack)-1]
-	return frame
-}
-
-func (p *parser) push(expr Expr) {
-	p.stack = append(p.stack, append(p.popFrame(), expr))
-}
-
-func (p *parser) pushBinary(op Op) {
-	p.push(&BinaryExpr{RHS: p.pop(), LHS: p.pop(), Op: op})
-}
-
-func (p *parser) pop() Expr {
-	frame := p.popFrame()
-	v := frame[len(frame)-1]
-	p.stack = append(p.stack, frame[:len(frame)-1])
-	return v
 }
 
 func (p *parser) token(i int) token {
@@ -82,165 +52,136 @@ func (p *parser) match(k kind) token {
 }
 
 func (p *parser) parse() Expr {
-	p.pushFrame()
-	p.orExpr()
+	expr := p.orExpr()
 	p.match(eof)
-	return p.pop()
+	return expr
 }
 
-func (p *parser) orExpr() {
-	p.andExpr()
+func (p *parser) orExpr() Expr {
+	expr := p.andExpr()
 	if p.token(0).kind == or {
 		p.match(or)
-		p.orExpr()
-		p.pushBinary(Or)
+		return &BinaryExpr{expr, Or, p.orExpr()}
 	}
+	return expr
 }
 
-func (p *parser) andExpr() {
-	p.equalityExpr()
+func (p *parser) andExpr() Expr {
+	expr := p.equalityExpr()
 	if p.token(0).kind == and {
 		p.match(and)
-		p.andExpr()
-		p.pushBinary(And)
+		return &BinaryExpr{expr, And, p.andExpr()}
 	}
+	return expr
 }
 
-func (p *parser) equalityExpr() {
-	p.relationalExpr()
+func (p *parser) equalityExpr() Expr {
+	expr := p.relationalExpr()
 	for {
 		switch kind := p.token(0).kind; kind {
 		case eq, neq:
 			p.match(kind)
-			p.relationalExpr()
-			p.pushBinary(Op(kind))
+			expr = &BinaryExpr{expr, Op(kind), p.relationalExpr()}
 		default:
-			return
+			return expr
 		}
 	}
 }
 
-func (p *parser) relationalExpr() {
-	p.additiveExpr()
+func (p *parser) relationalExpr() Expr {
+	expr := p.additiveExpr()
 	for {
 		switch kind := p.token(0).kind; kind {
 		case lt, lte, gt, gte:
 			p.match(kind)
-			p.additiveExpr()
-			p.pushBinary(Op(kind))
+			expr = &BinaryExpr{expr, Op(kind), p.additiveExpr()}
 		default:
-			return
+			return expr
 		}
 	}
 }
 
-func (p *parser) additiveExpr() {
-	p.multiplicativeExpr()
+func (p *parser) additiveExpr() Expr {
+	expr := p.multiplicativeExpr()
 	for {
 		switch kind := p.token(0).kind; kind {
 		case plus, minus:
 			p.match(kind)
-			p.multiplicativeExpr()
-			p.pushBinary(Op(kind))
+			expr = &BinaryExpr{expr, Op(kind), p.multiplicativeExpr()}
 		default:
-			return
+			return expr
 		}
 	}
 }
 
-func (p *parser) multiplicativeExpr() {
-	p.unaryExpr()
+func (p *parser) multiplicativeExpr() Expr {
+	expr := p.unaryExpr()
 	for {
 		switch kind := p.token(0).kind; kind {
 		case multiply, div, mod:
 			p.match(kind)
-			p.unaryExpr()
-			p.pushBinary(Op(kind))
+			expr = &BinaryExpr{expr, Op(kind), p.unaryExpr()}
 		default:
-			return
+			return expr
 		}
 	}
 }
 
-func (p *parser) unaryExpr() {
+func (p *parser) unaryExpr() Expr {
 	if p.token(0).kind == minus {
 		p.match(minus)
-		p.unaryExpr()
-		p.push(&NegateExpr{p.pop()})
-	} else {
-		p.unionExpr()
+		return &NegateExpr{p.unionExpr()}
 	}
+	return p.unionExpr()
 }
 
-func (p *parser) unionExpr() {
-	p.pathExpr()
+func (p *parser) unionExpr() Expr {
+	expr := p.pathExpr()
 	if p.token(0).kind == pipe {
 		p.match(pipe)
-		p.orExpr()
-		p.pushBinary(Union)
+		return &BinaryExpr{expr, Union, p.orExpr()}
 	}
+	return expr
 }
 
-func (p *parser) pathExpr() {
-	p.pushFrame()
+func (p *parser) pathExpr() Expr {
+	var filter Expr
+	var locationPath *LocationPath
 	switch p.token(0).kind {
 	case number, literal:
-		p.filterExpr()
+		filter = p.filterExpr()
 		switch p.token(0).kind {
 		case slash, slashSlash:
 			panic(p.error("nodeset expected"))
 		}
 	case lparen, dollar:
-		p.filterExpr()
+		filter = p.filterExpr()
 		switch p.token(0).kind {
 		case slash, slashSlash:
-			p.locationPath(false)
+			locationPath = p.locationPath(false)
 		}
 	case identifier:
 		if (p.token(1).kind == lparen && !isNodeTypeName(p.token(0))) || (p.token(1).kind == colon && p.token(3).kind == lparen) {
-			p.filterExpr()
+			filter = p.filterExpr()
 			switch p.token(0).kind {
 			case slash, slashSlash:
-				p.locationPath(false)
+				locationPath = p.locationPath(false)
 			}
 		} else {
-			p.locationPath(false)
+			locationPath = p.locationPath(false)
 		}
 	case dot, dotDot, star, at:
-		p.locationPath(false)
+		locationPath = p.locationPath(false)
 	case slash, slashSlash:
-		p.locationPath(true)
+		locationPath = p.locationPath(true)
 	default:
 		panic(p.unexpectedToken())
 	}
-
-	var path *PathExpr
-	if len(p.peekFrame()) == 2 {
-		locationPath, ok := p.pop().(*LocationPath)
-		if !ok {
-			panic("locationPath expected")
-		}
-		filter, ok := p.pop().(*FilterExpr)
-		if !ok {
-			panic("filter expected")
-		}
-		path = &PathExpr{filter, locationPath}
-	} else {
-		switch v := p.pop().(type) {
-		case *LocationPath:
-			path = &PathExpr{nil, v}
-		case *FilterExpr:
-			path = &PathExpr{v, nil}
-		default:
-			panic("expected locationPath or filter")
-		}
-	}
-	p.popFrame()
-	p.push(path)
+	return &PathExpr{filter, locationPath}
 }
 
-func (p *parser) filterExpr() {
-	p.pushFrame()
+func (p *parser) filterExpr() *FilterExpr {
+	var expr Expr
 	switch t := p.token(0); t.kind {
 	case number:
 		p.match(number)
@@ -248,123 +189,124 @@ func (p *parser) filterExpr() {
 		if err != nil {
 			panic(err)
 		}
-		p.push(Number(f))
+		expr = Number(f)
 	case literal:
 		p.match(literal)
-		p.push(String(t.text()))
+		expr = String(t.text())
 	case lparen:
 		p.match(lparen)
-		p.orExpr()
+		expr = p.orExpr()
 		p.match(rparen)
 	case identifier:
-		p.functionCall()
+		expr = p.functionCall()
 	case dollar:
-		p.variableReference()
+		expr = p.variableReference()
 	}
-	p.push(&FilterExpr{p.popFrame()[0], p.predicates()})
+	return &FilterExpr{expr, p.predicates()}
 }
 
-func (p *parser) functionCall() {
+func (p *parser) functionCall() *FuncCall {
 	prefix := ""
 	if p.token(1).kind == colon {
 		prefix = p.match(identifier).text()
 		p.match(colon)
 	}
 	name := p.match(identifier).text()
-	p.pushFrame()
 	p.match(lparen)
-	p.arguments()
+	args := p.arguments()
 	p.match(rparen)
-	p.push(&FuncCall{prefix, name, p.popFrame()})
+	return &FuncCall{prefix, name, args}
 }
 
-func (p *parser) arguments() {
+func (p *parser) arguments() []Expr {
+	var args []Expr
 	for p.token(0).kind != rparen {
-		p.orExpr()
+		args = append(args, p.orExpr())
 		if p.token(0).kind == comma {
 			p.match(comma)
 		} else {
 			break
 		}
 	}
+	return args
 }
 
 func (p *parser) predicates() []Expr {
-	p.pushFrame()
+	var predicates []Expr
 	for p.token(0).kind == lbracket {
 		p.match(lbracket)
-		p.orExpr()
+		predicates = append(predicates, p.orExpr())
 		p.match(rbracket)
 	}
-	return p.popFrame()
+	return predicates
 }
 
-func (p *parser) variableReference() {
+func (p *parser) variableReference() *VarRef {
 	p.match(dollar)
 	prefix := ""
 	if p.token(1).kind == colon {
 		prefix = p.match(identifier).text()
 		p.match(colon)
 	}
-	p.push(&VarRef{prefix, p.match(identifier).text()})
+	return &VarRef{prefix, p.match(identifier).text()}
 }
 
-func (p *parser) locationPath(abs bool) {
+func (p *parser) locationPath(abs bool) *LocationPath {
 	switch p.token(0).kind {
 	case slash, slashSlash:
 		if abs {
-			p.absoluteLocationPath()
-		} else {
-			p.relativeLocationPath()
+			return p.absoluteLocationPath()
 		}
+		return p.relativeLocationPath()
 	case at, identifier, dot, dotDot, star:
-		p.relativeLocationPath()
+		return p.relativeLocationPath()
 	default:
 		panic(p.unexpectedToken())
 	}
 }
 
-func (p *parser) absoluteLocationPath() {
-	p.pushFrame()
+func (p *parser) absoluteLocationPath() *LocationPath {
+	var steps []*Step
 	switch p.token(0).kind {
 	case slash:
 		p.match(slash)
 		switch p.token(0).kind {
 		case dot, dotDot, at, identifier, star:
-			p.steps()
+			steps = p.steps()
 		}
 	case slashSlash:
-		p.push(&Step{DescendantOrSelf, Node, nil})
+		steps = append(steps, &Step{DescendantOrSelf, Node, nil})
 		p.match(slashSlash)
 		switch p.token(0).kind {
 		case dot, dotDot, at, identifier, star:
-			p.steps()
+			steps = append(steps, p.steps()...)
 		default:
 			panic(p.error(`locationPath cannot end with "//"`))
 		}
 	}
-	p.push(&LocationPath{true, toSteps(p.popFrame())})
+	return &LocationPath{true, steps}
 }
 
-func (p *parser) relativeLocationPath() {
-	p.pushFrame()
+func (p *parser) relativeLocationPath() *LocationPath {
+	var steps []*Step
 	switch p.token(0).kind {
 	case slash:
 		p.match(slash)
 	case slashSlash:
-		p.push(&Step{DescendantOrSelf, Node, nil})
+		steps = append(steps, &Step{DescendantOrSelf, Node, nil})
 		p.match(slashSlash)
 	}
-	p.steps()
-	p.push(&LocationPath{false, toSteps(p.popFrame())})
+	steps = append(steps, p.steps()...)
+	return &LocationPath{false, steps}
 }
 
-func (p *parser) steps() {
+func (p *parser) steps() []*Step {
+	var steps []*Step
 	switch p.token(0).kind {
 	case dot, dotDot, at, identifier, star:
-		p.step()
+		steps = append(steps, p.step())
 	case eof:
-		return
+		return steps
 	default:
 		panic(p.expectedTokens(dot, dotDot, at, identifier, star))
 	}
@@ -373,21 +315,21 @@ func (p *parser) steps() {
 		case slash:
 			p.match(slash)
 		case slashSlash:
-			p.push(&Step{DescendantOrSelf, Node, nil})
+			steps = append(steps, &Step{DescendantOrSelf, Node, nil})
 			p.match(slashSlash)
 		default:
-			return
+			return steps
 		}
 		switch p.token(0).kind {
 		case dot, dotDot, at, identifier, star:
-			p.step()
+			steps = append(steps, p.step())
 		default:
 			panic(p.expectedTokens(dot, dotDot, at, identifier, star))
 		}
 	}
 }
 
-func (p *parser) step() {
+func (p *parser) step() *Step {
 	var axis Axis
 	var nodeTest NodeTest
 	switch p.token(0).kind {
@@ -413,7 +355,7 @@ func (p *parser) step() {
 		}
 		nodeTest = p.nodeTest(axis)
 	}
-	p.push(&Step{axis, nodeTest, p.predicates()})
+	return &Step{axis, nodeTest, p.predicates()}
 }
 
 func (p *parser) nodeTest(axis Axis) NodeTest {
@@ -482,14 +424,6 @@ func (p *parser) axisSpecifier() Axis {
 	p.match(identifier)
 	p.match(colonColon)
 	return axis
-}
-
-func toSteps(frame []Expr) []*Step {
-	steps := make([]*Step, len(frame))
-	for i := range frame {
-		steps[i] = frame[i].(*Step)
-	}
-	return steps
 }
 
 func isNodeTypeName(t token) bool {
