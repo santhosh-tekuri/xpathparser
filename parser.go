@@ -225,9 +225,9 @@ func (p *parser) arguments() []Expr {
 		args = append(args, p.orExpr())
 		if p.token(0).kind == comma {
 			p.match(comma)
-		} else {
-			break
+			continue
 		}
+		break
 	}
 	return args
 }
@@ -367,16 +367,15 @@ func (p *parser) nodeTest(axis Axis) NodeTest {
 		return p.nameTest(axis)
 	case star:
 		return p.nameTest(axis)
-	default:
-		panic(p.expectedTokens(identifier, star))
 	}
+	panic(p.expectedTokens(identifier, star))
 }
 
 func (p *parser) nodeTypeTest(axis Axis) NodeTest {
-	t := p.match(identifier)
+	ntype := p.match(identifier).text()
 	p.match(lparen)
 	var nodeTest NodeTest
-	switch t.text() {
+	switch ntype {
 	case "processing-instruction":
 		piName := ""
 		if p.token(0).kind == literal {
@@ -390,7 +389,7 @@ func (p *parser) nodeTypeTest(axis Axis) NodeTest {
 	case "comment":
 		nodeTest = Comment
 	default:
-		panic(p.error("invalid nodeType %q", t.text()))
+		panic(p.error("invalid nodeType %q", ntype))
 	}
 	p.match(rparen)
 	return nodeTest
