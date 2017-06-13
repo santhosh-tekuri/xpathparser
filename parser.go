@@ -16,20 +16,20 @@ type parser struct {
 	stack  [][]Expr
 }
 
-func (p *parser) panic(format string, args ...interface{}) {
-	panic(&Error{fmt.Sprintf(format, args...), p.lexer.xpath, p.token(0).begin})
+func (p *parser) error(format string, args ...interface{}) error {
+	return &Error{fmt.Sprintf(format, args...), p.lexer.xpath, p.token(0).begin}
 }
 
-func (p *parser) unexpectedToken() {
-	p.panic("unexpected token %s", p.token(0).kind)
+func (p *parser) unexpectedToken() error {
+	return p.error("unexpected token %s", p.token(0).kind)
 }
 
-func (p *parser) expectedTokens(expected ...kind) {
+func (p *parser) expectedTokens(expected ...kind) error {
 	tokens := make([]string, len(expected))
 	for i, k := range expected {
 		tokens[i] = k.String()
 	}
-	p.panic("expected %s, but got %v", strings.Join(tokens, " or "), p.token(0).kind)
+	return p.error("expected %s, but got %v", strings.Join(tokens, " or "), p.token(0).kind)
 }
 
 func (p *parser) pushFrame() {
@@ -75,7 +75,7 @@ func (p *parser) token(i int) token {
 func (p *parser) match(k kind) token {
 	t := p.token(0)
 	if t.kind != k {
-		p.panic("expected %v, but got %v", k, t.kind)
+		panic(p.error("expected %v, but got %v", k, t.kind))
 	}
 	p.tokens = p.tokens[1:]
 	return t
@@ -188,7 +188,7 @@ func (p *parser) pathExpr() {
 		p.filterExpr()
 		switch p.token(0).kind {
 		case slash, slashSlash:
-			p.panic("nodeset expected")
+			panic(p.error("nodeset expected"))
 		}
 	case lparen, dollar:
 		p.filterExpr()
@@ -211,7 +211,7 @@ func (p *parser) pathExpr() {
 	case slash, slashSlash:
 		p.locationPath(true)
 	default:
-		p.unexpectedToken()
+		panic(p.unexpectedToken())
 	}
 
 	var path *PathExpr
@@ -329,7 +329,7 @@ func (p *parser) locationPath(abs bool) {
 	case at, identifier, dot, dotDot, star:
 		p.relativeLocationPath()
 	default:
-		p.unexpectedToken()
+		panic(p.unexpectedToken())
 	}
 }
 
@@ -350,7 +350,7 @@ func (p *parser) absoluteLocationPath() {
 		case dot, dotDot, at, identifier, star:
 			p.steps()
 		default:
-			p.panic(`locationPath cannot end with "//"`)
+			panic(p.error(`locationPath cannot end with "//"`))
 		}
 	}
 	p.endLocationPath()
@@ -377,7 +377,7 @@ func (p *parser) steps() {
 	case eof:
 		return
 	default:
-		p.expectedTokens(dot, dotDot, at, identifier, star)
+		panic(p.expectedTokens(dot, dotDot, at, identifier, star))
 	}
 	for {
 		switch p.token(0).kind {
@@ -393,7 +393,7 @@ func (p *parser) steps() {
 		case dot, dotDot, at, identifier, star:
 			p.step()
 		default:
-			p.expectedTokens(dot, dotDot, at, identifier, star)
+			panic(p.expectedTokens(dot, dotDot, at, identifier, star))
 		}
 	}
 }
@@ -442,7 +442,7 @@ func (p *parser) nodeTest(axis Axis) {
 	case star:
 		p.nameTest(axis)
 	default:
-		p.expectedTokens(identifier, star)
+		panic(p.expectedTokens(identifier, star))
 	}
 }
 
@@ -464,7 +464,7 @@ func (p *parser) nodeTypeTest(axis Axis) {
 	case "comment":
 		nodeTest = Comment
 	default:
-		p.panic("invalid nodeType %q", t.text())
+		panic(p.error("invalid nodeType %q", t.text()))
 	}
 	p.match(rparen)
 	p.pushFrame()
@@ -499,7 +499,7 @@ func (p *parser) axisSpecifier() Axis {
 	name := p.token(0).text()
 	axis, ok := name2Axis[name]
 	if !ok {
-		p.panic("invalid axis %s", name)
+		panic(p.error("invalid axis %s", name))
 	}
 	p.match(identifier)
 	p.match(colonColon)

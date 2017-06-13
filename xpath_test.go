@@ -52,6 +52,7 @@ func TestInvalidXPaths(t *testing.T) {
 		`//+1`,
 		`(.)/123`,
 		`123/`,
+		`abc[]`,
 	}
 	for _, test := range tests {
 		if _, err := Parse(test); err == nil {
@@ -119,6 +120,9 @@ func TestCompiledXPaths(t *testing.T) {
 		},
 		`a[1]`: &LocationPath{false, []*Step{
 			{Child, &NameTest{"", "a"}, []Expr{Number(1)}},
+		}},
+		`a[1][2]`: &LocationPath{false, []*Step{
+			{Child, &NameTest{"", "a"}, []Expr{Number(1), Number(2)}},
 		}},
 		`foo(1)`: &FuncCall{"", "foo", []Expr{
 			Number(1),
