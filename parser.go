@@ -399,21 +399,16 @@ func (p *parser) steps() {
 }
 
 func (p *parser) step() {
+	var axis Axis
+	var nodeTest NodeTest
 	switch p.token(0).kind {
 	case dot:
 		p.match(dot)
-		p.pushFrame()
-		p.push(&Step{Self, Node, nil})
-		p.predicates()
-		p.endStep()
+		axis, nodeTest = Self, Node
 	case dotDot:
 		p.match(dotDot)
-		p.pushFrame()
-		p.push(&Step{Parent, Node, nil})
-		p.predicates()
-		p.endStep()
+		axis, nodeTest = Parent, Node
 	default:
-		var axis Axis
 		switch p.token(0).kind {
 		case at:
 			p.match(at)
@@ -427,26 +422,29 @@ func (p *parser) step() {
 		case star:
 			axis = Child
 		}
-		p.nodeTest(axis)
+		nodeTest = p.nodeTest(axis)
 	}
+	p.pushFrame()
+	p.push(&Step{axis, nodeTest, nil})
+	p.predicates()
+	p.endStep()
 }
 
-func (p *parser) nodeTest(axis Axis) {
+func (p *parser) nodeTest(axis Axis) NodeTest {
 	switch p.token(0).kind {
 	case identifier:
 		if p.token(1).kind == lparen {
-			p.nodeTypeTest(axis)
-		} else {
-			p.nameTest(axis)
+			return p.nodeTypeTest(axis)
 		}
+		return p.nameTest(axis)
 	case star:
-		p.nameTest(axis)
+		return p.nameTest(axis)
 	default:
 		panic(p.expectedTokens(identifier, star))
 	}
 }
 
-func (p *parser) nodeTypeTest(axis Axis) {
+func (p *parser) nodeTypeTest(axis Axis) NodeTest {
 	t := p.match(identifier)
 	p.match(lparen)
 	var nodeTest NodeTest
@@ -467,13 +465,10 @@ func (p *parser) nodeTypeTest(axis Axis) {
 		panic(p.error("invalid nodeType %q", t.text()))
 	}
 	p.match(rparen)
-	p.pushFrame()
-	p.push(&Step{axis, nodeTest, nil})
-	p.predicates()
-	p.endStep()
+	return nodeTest
 }
 
-func (p *parser) nameTest(axis Axis) {
+func (p *parser) nameTest(axis Axis) NodeTest {
 	var prefix string
 	if p.token(1).kind == colon && p.token(0).kind == identifier {
 		prefix = p.match(identifier).text()
@@ -489,10 +484,7 @@ func (p *parser) nameTest(axis Axis) {
 	default:
 		// let us assume localName as empty-string and continue
 	}
-	p.pushFrame()
-	p.push(&Step{axis, &NameTest{prefix, localName}, nil})
-	p.predicates()
-	p.endStep()
+	return &NameTest{prefix, localName}
 }
 
 func (p *parser) axisSpecifier() Axis {
