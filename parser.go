@@ -326,7 +326,6 @@ func (p *parser) locationPath(abs bool) {
 
 func (p *parser) absoluteLocationPath() {
 	p.pushFrame()
-	p.push(&LocationPath{Abs: true})
 	switch p.token(0).kind {
 	case slash:
 		p.match(slash)
@@ -344,12 +343,11 @@ func (p *parser) absoluteLocationPath() {
 			panic(p.error(`locationPath cannot end with "//"`))
 		}
 	}
-	p.endLocationPath()
+	p.push(&LocationPath{true, toSteps(p.popFrame())})
 }
 
 func (p *parser) relativeLocationPath() {
 	p.pushFrame()
-	p.push(&LocationPath{Abs: false})
 	switch p.token(0).kind {
 	case slash:
 		p.match(slash)
@@ -358,7 +356,7 @@ func (p *parser) relativeLocationPath() {
 		p.match(slashSlash)
 	}
 	p.steps()
-	p.endLocationPath()
+	p.push(&LocationPath{false, toSteps(p.popFrame())})
 }
 
 func (p *parser) steps() {
@@ -486,14 +484,12 @@ func (p *parser) axisSpecifier() Axis {
 	return axis
 }
 
-func (p *parser) endLocationPath() {
-	frame := p.popFrame()
-	lpath := frame[0].(*LocationPath)
-	lpath.Steps = make([]*Step, len(frame)-1)
-	for i := range lpath.Steps {
-		lpath.Steps[i] = frame[i+1].(*Step)
+func toSteps(frame []Expr) []*Step {
+	steps := make([]*Step, len(frame))
+	for i := range frame {
+		steps[i] = frame[i].(*Step)
 	}
-	p.push(lpath)
+	return steps
 }
 
 func isNodeTypeName(t token) bool {
