@@ -16,9 +16,12 @@ type parser struct {
 	stack  [][]Expr
 }
 
+func (p *parser) panic(format string, args ...interface{}) {
+	panic(&Error{fmt.Sprintf(format, args...), p.lexer.xpath, p.token(0).begin})
+}
+
 func (p *parser) unexpectedToken() {
-	t := p.token(0)
-	panic(&Error{fmt.Sprintf("unexpected token %s", t.kind), p.lexer.xpath, t.begin})
+	p.panic("unexpected token %s", p.token(0).kind)
 }
 
 func (p *parser) expectedTokens(expected ...kind) {
@@ -26,8 +29,7 @@ func (p *parser) expectedTokens(expected ...kind) {
 	for i, k := range expected {
 		tokens[i] = k.String()
 	}
-	t := p.token(0)
-	panic(&Error{fmt.Sprintf("expected %s, but got %v", strings.Join(tokens, " or "), t.kind), p.lexer.xpath, t.begin})
+	p.panic("expected %s, but got %v", strings.Join(tokens, " or "), p.token(0).kind)
 }
 
 func (p *parser) pushFrame() {
@@ -73,7 +75,7 @@ func (p *parser) token(i int) token {
 func (p *parser) match(k kind) token {
 	t := p.token(0)
 	if t.kind != k {
-		panic(&Error{fmt.Sprintf("expected %v, but got %v", k, t.kind), p.lexer.xpath, t.begin})
+		p.panic("expected %v, but got %v", k, t.kind)
 	}
 	p.tokens = p.tokens[1:]
 	return t
@@ -186,7 +188,7 @@ func (p *parser) pathExpr() {
 		p.filterExpr()
 		switch p.token(0).kind {
 		case slash, slashSlash:
-			panic(&Error{"nodeset expected", p.lexer.xpath, p.token(0).begin})
+			p.panic("nodeset expected")
 		}
 	case lparen, dollar:
 		p.filterExpr()
@@ -355,7 +357,7 @@ func (p *parser) absoluteLocationPath() {
 		case dot, dotDot, at, identifier, star:
 			p.steps()
 		default:
-			panic(&Error{`locationPath cannot end with "//"`, p.lexer.xpath, p.token(0).begin})
+			p.panic(`locationPath cannot end with "//"`)
 		}
 	}
 	p.endLocationPath()
@@ -469,7 +471,7 @@ func (p *parser) nodeTypeTest(axis Axis) {
 	case "comment":
 		nodeTest = Comment
 	default:
-		panic(&Error{fmt.Sprintf("invalid nodeType %q", t.text()), p.lexer.xpath, t.begin})
+		p.panic("invalid nodeType %q", t.text())
 	}
 	p.match(rparen)
 	p.pushFrame()
@@ -504,7 +506,7 @@ func (p *parser) axisSpecifier() Axis {
 	name := p.token(0).text()
 	axis, ok := name2Axis[name]
 	if !ok {
-		panic(&Error{"invalid axis " + name, p.lexer.xpath, p.token(0).begin})
+		p.panic("invalid axis %s", name)
 	}
 	p.match(identifier)
 	p.match(colonColon)
