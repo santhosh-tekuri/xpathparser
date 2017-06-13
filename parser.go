@@ -241,8 +241,7 @@ func (p *parser) pathExpr() {
 
 func (p *parser) filterExpr() {
 	p.pushFrame()
-	t := p.token(0)
-	switch t.kind {
+	switch t := p.token(0); t.kind {
 	case number:
 		p.match(number)
 		f, err := strconv.ParseFloat(t.text(), 64)
@@ -262,13 +261,7 @@ func (p *parser) filterExpr() {
 	case dollar:
 		p.variableReference()
 	}
-	p.predicates()
-	frame := p.popFrame()
-	filter := &FilterExpr{frame[0], make([]Expr, len(frame)-1)}
-	for i := range filter.Predicates {
-		filter.Predicates[i] = frame[i+1]
-	}
-	p.push(filter)
+	p.push(&FilterExpr{p.popFrame()[0], p.predicates()})
 }
 
 func (p *parser) functionCall() {
@@ -296,7 +289,8 @@ func (p *parser) arguments() {
 	}
 }
 
-func (p *parser) predicates() {
+func (p *parser) predicates() []Expr {
+	p.pushFrame()
 	for p.token(0).kind == lbracket {
 		p.pushFrame()
 		p.match(lbracket)
@@ -306,6 +300,7 @@ func (p *parser) predicates() {
 		p.popFrame()
 		p.push(predicate)
 	}
+	return p.popFrame()
 }
 
 func (p *parser) variableReference() {
@@ -424,10 +419,7 @@ func (p *parser) step() {
 		}
 		nodeTest = p.nodeTest(axis)
 	}
-	p.pushFrame()
-	p.push(&Step{axis, nodeTest, nil})
-	p.predicates()
-	p.endStep()
+	p.push(&Step{axis, nodeTest, p.predicates()})
 }
 
 func (p *parser) nodeTest(axis Axis) NodeTest {
@@ -496,16 +488,6 @@ func (p *parser) axisSpecifier() Axis {
 	p.match(identifier)
 	p.match(colonColon)
 	return axis
-}
-
-func (p *parser) endStep() {
-	frame := p.popFrame()
-	step := frame[0].(*Step)
-	step.Predicates = make([]Expr, len(frame)-1)
-	for i := range step.Predicates {
-		step.Predicates[i] = frame[i+1]
-	}
-	p.push(step)
 }
 
 func (p *parser) endLocationPath() {
