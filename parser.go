@@ -214,11 +214,11 @@ func (p *parser) functionCall() *FuncCall {
 		prefix = p.match(identifier).text()
 		p.match(colon)
 	}
-	name := p.match(identifier).text()
+	local := p.match(identifier).text()
 	p.match(lparen)
 	args := p.arguments()
 	p.match(rparen)
-	return &FuncCall{prefix, name, args}
+	return &FuncCall{prefix, local, args}
 }
 
 func (p *parser) arguments() []Expr {
@@ -405,17 +405,17 @@ func (p *parser) nameTest(axis Axis) NodeTest {
 		prefix = p.match(identifier).text()
 		p.match(colon)
 	}
-	var localName string
+	var local string
 	switch p.token(0).kind {
 	case identifier:
-		localName = p.match(identifier).text()
+		local = p.match(identifier).text()
 	case star:
 		p.match(star)
-		localName = "*"
+		local = "*"
 	default:
 		// let us assume localName as empty-string and continue
 	}
-	return &NameTest{prefix, localName}
+	return &NameTest{prefix, local}
 }
 
 func (p *parser) axisSpecifier() Axis {
