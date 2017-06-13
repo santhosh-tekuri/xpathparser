@@ -168,30 +168,17 @@ type FilterExpr struct {
 }
 
 func (f *FilterExpr) String() string {
-	return fmt.Sprintf("%s%s", f.Expr, predicatesString(f.Predicates))
+	return fmt.Sprintf("(%s)%s", f.Expr, predicatesString(f.Predicates))
 }
 
 // PathExpr represents https://www.w3.org/TR/xpath/#NT-PathExpr.
 type PathExpr struct {
-	Filter       Expr // not nil after simplify
+	Filter       Expr
 	LocationPath *LocationPath
 }
 
 func (p *PathExpr) String() string {
-	s := ""
-	if p.Filter != nil {
-		s += fmt.Sprint(p.Filter)
-	}
-	if p.LocationPath != nil {
-		if len(s) > 0 {
-			s = "(" + s + ")"
-		}
-		if len(p.LocationPath.Steps) > 0 {
-			s += "/"
-		}
-		s += p.LocationPath.String()
-	}
-	return s
+	return fmt.Sprintf("(%s)/%s", p.Filter, p.LocationPath)
 }
 
 // Step represents XPath location step.
