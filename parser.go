@@ -181,25 +181,24 @@ func (p *parser) unionExpr() {
 
 func (p *parser) pathExpr() {
 	p.pushFrame()
-	t := p.token(0)
-	switch t.kind {
+	switch p.token(0).kind {
 	case number, literal:
 		p.filterExpr()
-		t = p.token(0)
-		if t.kind == slash || t.kind == slashSlash {
+		switch p.token(0).kind {
+		case slash, slashSlash:
 			panic(&Error{"nodeset expected", p.lexer.xpath, p.token(0).begin})
 		}
 	case lparen, dollar:
 		p.filterExpr()
-		t = p.token(0)
-		if t.kind == slash || t.kind == slashSlash {
+		switch p.token(0).kind {
+		case slash, slashSlash:
 			p.locationPath(false)
 		}
 	case identifier:
 		if (p.token(1).kind == lparen && !isNodeTypeName(p.token(0))) || (p.token(1).kind == colon && p.token(3).kind == lparen) {
 			p.filterExpr()
-			t = p.token(0)
-			if t.kind == slash || t.kind == slashSlash {
+			switch p.token(0).kind {
+			case slash, slashSlash:
 				p.locationPath(false)
 			}
 		} else {
@@ -225,12 +224,12 @@ func (p *parser) pathExpr() {
 		}
 		path = &PathExpr{filter, locationPath}
 	} else {
-		v := p.pop()
-		if lp, ok := v.(*LocationPath); ok {
-			path = &PathExpr{nil, lp}
-		} else if f, ok := v.(*FilterExpr); ok {
-			path = &PathExpr{f, nil}
-		} else {
+		switch v := p.pop().(type) {
+		case *LocationPath:
+			path = &PathExpr{nil, v}
+		case *FilterExpr:
+			path = &PathExpr{v, nil}
+		default:
 			panic("expected locationPath or filter")
 		}
 	}
