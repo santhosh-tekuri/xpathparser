@@ -115,10 +115,9 @@ const (
 	Union
 )
 
-var opNames = []string{"=", "!=", "<", "<=", ">", ">=", "+", "-", "*", "mod", "div", "and", "or", "|"}
-
 func (op Op) String() string {
-	return opNames[op]
+	str := kind(op).String()
+	return str[1 : len(str)-1]
 }
 
 // An Expr is an interface holding one of the types:

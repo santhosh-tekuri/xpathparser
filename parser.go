@@ -106,69 +106,57 @@ func (p *parser) andExpr() {
 
 func (p *parser) equalityExpr() {
 	p.relationalExpr()
-	t := p.token(0)
-	for t.kind == eq || t.kind == neq {
-		p.match(t.kind)
-		p.relationalExpr()
-		if t.kind == eq {
-			p.pushBinary(EQ)
-		} else {
-			p.pushBinary(NEQ)
+	for {
+		switch kind := p.token(0).kind; kind {
+		case eq, neq:
+			p.match(kind)
+			p.relationalExpr()
+			p.pushBinary(Op(kind))
+		default:
+			return
 		}
-		t = p.token(0)
 	}
 }
 
 func (p *parser) relationalExpr() {
 	p.additiveExpr()
-	t := p.token(0)
-	for t.kind == lt || t.kind == gt || t.kind == lte || t.kind == gte {
-		p.match(t.kind)
-		p.additiveExpr()
-		switch t.kind {
-		case lt:
-			p.pushBinary(LT)
-		case gt:
-			p.pushBinary(GT)
-		case lte:
-			p.pushBinary(LTE)
-		case gte:
-			p.pushBinary(GTE)
+	for {
+		switch kind := p.token(0).kind; kind {
+		case lt, lte, gt, gte:
+			p.match(kind)
+			p.additiveExpr()
+			p.pushBinary(Op(kind))
+		default:
+			return
 		}
-		t = p.token(0)
 	}
 }
 
 func (p *parser) additiveExpr() {
 	p.multiplicativeExpr()
-	t := p.token(0)
-	for t.kind == plus || t.kind == minus {
-		p.match(t.kind)
-		p.multiplicativeExpr()
-		if t.kind == plus {
-			p.pushBinary(Add)
-		} else {
-			p.pushBinary(Subtract)
+	for {
+		switch kind := p.token(0).kind; kind {
+		case plus, minus:
+			p.match(kind)
+			p.multiplicativeExpr()
+			p.pushBinary(Op(kind))
+		default:
+			return
 		}
-		t = p.token(0)
 	}
 }
 
 func (p *parser) multiplicativeExpr() {
 	p.unaryExpr()
-	t := p.token(0)
-	for t.kind == multiply || t.kind == div || t.kind == mod {
-		p.match(t.kind)
-		p.unaryExpr()
-		switch t.kind {
-		case multiply:
-			p.pushBinary(Multiply)
-		case div:
-			p.pushBinary(Div)
-		case mod:
-			p.pushBinary(Mod)
+	for {
+		switch kind := p.token(0).kind; kind {
+		case multiply, div, mod:
+			p.match(kind)
+			p.unaryExpr()
+			p.pushBinary(Op(kind))
+		default:
+			return
 		}
-		t = p.token(0)
 	}
 }
 

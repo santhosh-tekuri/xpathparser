@@ -15,62 +15,59 @@ import (
 type kind int
 
 const (
-	eof kind = iota
+	eof kind = iota - 1
 
+	// operators, note the order must same as Op enum values
 	eq
 	neq
 	lt
 	lte
 	gt
 	gte
-
 	plus
 	minus
-	star
+	multiply
 	mod
 	div
+	and
+	or
+	pipe
 
 	slash
 	slashSlash
 	dot
 	dotDot
-
-	identifier
-
-	at
-	pipe
 	colon
 	colonColon
+
+	at
+	dollar
+	comma
+	star
 
 	lbracket
 	rbracket
 	lparen
 	rparen
 
-	dollar
+	identifier
 	literal
-	and
-	or
-
 	number
-	comma
-	multiply
 )
 
 var kindNames = []string{
 	`<eof>`,
 	`'='`, `"!="`, `'<'`, `"<="`, `'>'`, `">="`,
 	`'+'`, `'-'`, `'*'`, `"mod"`, `"div"`,
-	`'/'`, `"//"`, `'.'`, `".."`,
-	`<identifier>`,
-	`'@'`, `'|'`, `':'`, `"::"`,
+	`"and"`, `"or"`, `'|'`,
+	`'/'`, `"//"`, `'.'`, `".."`, `':'`, `"::"`,
+	`'@'`, `'$'`, `','`, `'*'`,
 	`'['`, `']'`, `'('`, `')'`,
-	`'$'`, `<literal>`, `"and"`, `"or"`,
-	`<number>`, `','`, `'*'`,
+	`<identifier>`, `<literal>`, `<number>`,
 }
 
 func (k kind) String() string {
-	return kindNames[k]
+	return kindNames[k+1]
 }
 
 type token struct {
