@@ -181,17 +181,15 @@ func (p *parser) pathExpr() Expr {
 
 func (p *parser) filterExpr() Expr {
 	var expr Expr
-	switch t := p.token(0); t.kind {
+	switch p.token(0).kind {
 	case number:
-		p.match(number)
-		f, err := strconv.ParseFloat(t.text(), 64)
+		f, err := strconv.ParseFloat(p.match(number).text(), 64)
 		if err != nil {
 			panic(err)
 		}
 		expr = Number(f)
 	case literal:
-		p.match(literal)
-		expr = String(t.text())
+		expr = String(p.match(literal).text())
 	case lparen:
 		p.match(lparen)
 		expr = p.orExpr()
@@ -263,9 +261,8 @@ func (p *parser) locationPath(abs bool) *LocationPath {
 		return p.relativeLocationPath()
 	case at, identifier, dot, dotDot, star:
 		return p.relativeLocationPath()
-	default:
-		panic(p.unexpectedToken())
 	}
+	panic(p.unexpectedToken())
 }
 
 func (p *parser) absoluteLocationPath() *LocationPath {
@@ -278,8 +275,8 @@ func (p *parser) absoluteLocationPath() *LocationPath {
 			steps = p.steps()
 		}
 	case slashSlash:
-		steps = append(steps, &Step{DescendantOrSelf, Node, nil})
 		p.match(slashSlash)
+		steps = append(steps, &Step{DescendantOrSelf, Node, nil})
 		switch p.token(0).kind {
 		case dot, dotDot, at, identifier, star:
 			steps = append(steps, p.steps()...)
@@ -296,8 +293,8 @@ func (p *parser) relativeLocationPath() *LocationPath {
 	case slash:
 		p.match(slash)
 	case slashSlash:
-		steps = append(steps, &Step{DescendantOrSelf, Node, nil})
 		p.match(slashSlash)
+		steps = append(steps, &Step{DescendantOrSelf, Node, nil})
 	}
 	steps = append(steps, p.steps()...)
 	return &LocationPath{false, steps}
@@ -318,8 +315,8 @@ func (p *parser) steps() []*Step {
 		case slash:
 			p.match(slash)
 		case slashSlash:
-			steps = append(steps, &Step{DescendantOrSelf, Node, nil})
 			p.match(slashSlash)
+			steps = append(steps, &Step{DescendantOrSelf, Node, nil})
 		default:
 			return steps
 		}
