@@ -115,7 +115,7 @@ func (op Op) String() string {
 }
 
 // An Expr is an interface holding one of the types:
-// *LocationPath, *FilterExpr, *PathExpr, *Binary, *Negate, *VarRef, *FuncCall, Number or String
+// *LocationPath, *FilterExpr, *PathExpr, *BinaryExpr, *NegateExpr, *VarRef, *FuncCall, Number or String
 type Expr interface{}
 
 // BinaryExpr represents a binary operation.
@@ -144,12 +144,12 @@ type LocationPath struct {
 	Steps []*Step
 }
 
-func (l *LocationPath) String() string {
-	s := make([]string, len(l.Steps))
-	for i, step := range l.Steps {
+func (lp *LocationPath) String() string {
+	s := make([]string, len(lp.Steps))
+	for i, step := range lp.Steps {
 		s[i] = step.String()
 	}
-	if l.Abs {
+	if lp.Abs {
 		return fmt.Sprintf("/%s", strings.Join(s, "/"))
 	}
 	return fmt.Sprintf("%s", strings.Join(s, "/"))
@@ -251,8 +251,8 @@ func (n Number) String() string {
 // String represents string literal.
 type String string
 
-func (l String) String() string {
-	return strconv.Quote(string(l))
+func (s String) String() string {
+	return strconv.Quote(string(s))
 }
 
 // MustParse is like Parse but panics if the xpath expression has error.

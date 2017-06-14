@@ -397,7 +397,7 @@ func (p *parser) nodeTypeTest(axis Axis) NodeTest {
 
 func (p *parser) nameTest(axis Axis) NodeTest {
 	var prefix string
-	if p.token(1).kind == colon && p.token(0).kind == identifier {
+	if p.token(0).kind == identifier && p.token(1).kind == colon {
 		prefix = p.match(identifier).text()
 		p.match(colon)
 	}
